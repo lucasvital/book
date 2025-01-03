@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import { Surface, Text, Searchbar, useTheme } from 'react-native-paper';
+import { View, StyleSheet, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { Surface, Text, IconButton, FAB, Searchbar } from 'react-native-paper';
 import { useBooks } from '../contexts/BookContext';
-import BookCard from '../components/BookCard';
-import { Book } from '../types/book';
 import { useNavigation } from '@react-navigation/native';
+import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
+import { useTheme } from '../contexts/ThemeContext';
 
-type BookStatus = 'all' | 'to-read' | 'reading' | 'completed';
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const HomeScreen = () => {
-  const { books } = useBooks();
+  const { books, removeBook, updateBook } = useBooks();
   const navigation = useNavigation();
+  const { theme } = useTheme();
+  let row: Array<any> = [];
+  let prevOpenedRow: any;
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<BookStatus>('all');
-  const theme = useTheme();
+  const [selectedStatus, setSelectedStatus] = useState('all');
 
   const filteredBooks = books.filter(book => {
     const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -22,17 +25,109 @@ const HomeScreen = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleBookPress = (book: Book) => {
+  const handleBookPress = (book) => {
     navigation.navigate('BookDetails', { book });
   };
 
-  const renderBookCard = ({ item }: { item: Book }) => (
-    <TouchableOpacity onPress={() => handleBookPress(item)}>
-      <BookCard book={item} />
-    </TouchableOpacity>
-  );
+  const handleCompleteBook = async (book) => {
+    const updatedBook = {
+      ...book,
+      currentPage: book.totalPages,
+      status: 'completed',
+      lastUpdated: new Date().toISOString(),
+    };
+    await updateBook(updatedBook);
+  };
 
-  const FilterButton = ({ status, label }: { status: BookStatus, label: string }) => (
+  const closeRow = (index) => {
+    if (prevOpenedRow && prevOpenedRow !== row[index]) {
+      prevOpenedRow.close();
+    }
+    prevOpenedRow = row[index];
+  };
+
+  const renderLeftActions = (progress, dragX, book) => {
+    return (
+      <View style={[styles.leftAction, { backgroundColor: theme.colors.primary }]}>
+        <IconButton icon="check" iconColor="#fff" size={24} />
+        <Text style={styles.actionText}>Complete</Text>
+      </View>
+    );
+  };
+
+  const renderRightActions = (progress, dragX, book) => {
+    return (
+      <View style={[styles.rightAction, { backgroundColor: theme.colors.error }]}>
+        <IconButton icon="delete" iconColor="#fff" size={24} />
+        <Text style={styles.actionText}>Delete</Text>
+      </View>
+    );
+  };
+
+  const renderItem = ({ item, index }) => {
+    const progress = item.totalPages > 0 
+      ? Math.min(1, Math.round((item.currentPage / item.totalPages) * 100) / 100)
+      : 0;
+
+    return (
+      <Swipeable
+        ref={ref => row[index] = ref}
+        renderLeftActions={(progress, dragX) => renderLeftActions(progress, dragX, item)}
+        renderRightActions={(progress, dragX) => renderRightActions(progress, dragX, item)}
+        onSwipeableOpen={() => closeRow(index)}
+        onSwipeableLeftOpen={() => handleCompleteBook(item)}
+        onSwipeableRightOpen={() => removeBook(item.id)}
+      >
+        <Surface style={[styles.bookCard, { backgroundColor: theme.colors.surface }]}>
+          <TouchableOpacity onPress={() => handleBookPress(item)}>
+            <View style={styles.bookContent}>
+              {item.coverImage ? (
+                <Image source={{ uri: item.coverImage }} style={styles.cover} resizeMode="cover" />
+              ) : (
+                <View style={[styles.coverPlaceholder, { backgroundColor: theme.colors.surfaceVariant }]}>
+                  <Text style={{ color: theme.colors.onSurfaceVariant, fontFamily: 'Inter_400Regular' }}>
+                    No Cover
+                  </Text>
+                </View>
+              )}
+              <View style={styles.bookInfo}>
+                <Text 
+                  variant="titleMedium" 
+                  style={{ color: theme.colors.onSurface, marginBottom: 4, fontFamily: 'Inter_600SemiBold' }}
+                  numberOfLines={2}
+                >
+                  {item.title}
+                </Text>
+                <Text 
+                  variant="bodyMedium" 
+                  style={{ color: theme.colors.onSurfaceVariant, fontFamily: 'Inter_400Regular' }}
+                  numberOfLines={1}
+                >
+                  {item.author}
+                </Text>
+                <View style={styles.progressContainer}>
+                  <Text 
+                    variant="bodySmall" 
+                    style={{ color: theme.colors.onSurfaceVariant, fontFamily: 'Inter_400Regular' }}
+                  >
+                    {Math.round(progress * 100)}% completed
+                  </Text>
+                  <Text 
+                    variant="bodySmall" 
+                    style={{ color: theme.colors.onSurfaceVariant, fontFamily: 'Inter_400Regular' }}
+                  >
+                    Page {item.currentPage} of {item.totalPages}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Surface>
+      </Swipeable>
+    );
+  };
+
+  const FilterButton = ({ status, label }: { status: 'all' | 'to-read' | 'reading' | 'completed', label: string }) => (
     <TouchableOpacity
       onPress={() => setSelectedStatus(status)}
       style={[
@@ -58,45 +153,107 @@ const HomeScreen = () => {
   );
 
   return (
-    <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Searchbar
-        placeholder="Search books..."
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-        style={[
-          styles.searchBar,
-          { 
-            backgroundColor: theme.colors.elevation.level1,
-            borderColor: theme.colors.outline,
-            borderWidth: 1,
-          }
-        ]}
-        iconColor={theme.colors.onSurfaceVariant}
-        inputStyle={{ color: theme.colors.onSurface }}
-        placeholderTextColor={theme.colors.onSurfaceVariant}
-      />
-      
-      <View style={styles.filterContainer}>
-        <FilterButton status="all" label="All" />
-        <FilterButton status="to-read" label="To Read" />
-        <FilterButton status="reading" label="Reading" />
-        <FilterButton status="completed" label="Completed" />
-      </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background, padding: 16 }]}>
+        <Searchbar
+          placeholder="Search books..."
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={[
+            styles.searchBar,
+            { 
+              backgroundColor: theme.colors.elevation.level1,
+              borderColor: theme.colors.outline,
+              borderWidth: 1,
+            }
+          ]}
+          iconColor={theme.colors.onSurfaceVariant}
+          inputStyle={{ color: theme.colors.onSurface }}
+          placeholderTextColor={theme.colors.onSurfaceVariant}
+        />
+        
+        <View style={styles.filterContainer}>
+          <FilterButton status="all" label="All" />
+          <FilterButton status="to-read" label="To Read" />
+          <FilterButton status="reading" label="Reading" />
+          <FilterButton status="completed" label="Completed" />
+        </View>
 
-      <FlatList
-        data={filteredBooks}
-        renderItem={renderBookCard}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.bookList}
-      />
-    </Surface>
+        <FlatList
+          data={filteredBooks}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+        />
+        <FAB
+          icon="plus"
+          style={[styles.fab, { backgroundColor: theme.colors.primary, position: 'absolute', margin: 16, right: 0, bottom: 0 }]}
+          onPress={() => navigation.navigate('AddBook')}
+        />
+      </View>
+    </GestureHandlerRootView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  listContent: {
     padding: 16,
+  },
+  bookCard: {
+    borderRadius: 12,
+    elevation: 2,
+    marginBottom: 16,
+  },
+  bookContent: {
+    flexDirection: 'row',
+    padding: 16,
+  },
+  cover: {
+    width: 80,
+    height: 120,
+    borderRadius: 8,
+  },
+  coverPlaceholder: {
+    width: 80,
+    height: 120,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bookInfo: {
+    flex: 1,
+    marginLeft: 16,
+    justifyContent: 'space-between',
+  },
+  progressContainer: {
+    marginTop: 8,
+  },
+  fab: {
+  },
+  leftAction: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  rightAction: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  actionText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    marginHorizontal: 8,
   },
   searchBar: {
     marginBottom: 16,
@@ -118,9 +275,6 @@ const styles = StyleSheet.create({
   filterButtonText: {
     fontSize: 14,
     fontWeight: '500',
-  },
-  bookList: {
-    paddingBottom: 16,
   },
 });
 

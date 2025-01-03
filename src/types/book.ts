@@ -1,18 +1,25 @@
-export interface Book {
+export type NoteColor = 'blue' | 'green' | 'purple' | 'orange' | 'pink';
+
+export type Note = {
+  id: string;
+  text: string;
+  page: number;
+  color?: NoteColor; // Opcional para compatibilidade com notas antigas
+  createdAt: string;
+};
+
+export type Book = {
   id: string;
   title: string;
   author: string;
-  genre: string;
-  publicationYear: number;
   coverImage?: string;
   totalPages: number;
   currentPage: number;
   status: 'to-read' | 'reading' | 'completed';
-  notes: string[];
-  review?: {
-    rating: number;
-    text: string;
-    date: string;
-  };
+  genre?: string;
+  publicationYear?: number;
+  review?: string;
+  rating?: number;
+  notes?: Note[];
   lastUpdated: string;
-}
+};

@@ -9,6 +9,7 @@ interface BookContextData {
   updateReadingProgress: (bookId: string, currentPage: number) => Promise<void>;
   addNote: (bookId: string, note: string) => Promise<void>;
   addReview: (bookId: string, rating: number, text: string) => Promise<void>;
+  removeBook: (bookId: string) => Promise<void>;
 }
 
 const BookContext = createContext<BookContextData>({} as BookContextData);
@@ -111,6 +112,12 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await saveBooks(updatedBooks);
   };
 
+  const removeBook = async (bookId: string) => {
+    const updatedBooks = books.filter(book => book.id !== bookId);
+    setBooks(updatedBooks);
+    await saveBooks(updatedBooks);
+  };
+
   return (
     <BookContext.Provider
       value={{
@@ -120,6 +127,7 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateReadingProgress,
         addNote,
         addReview,
+        removeBook,
       }}
     >
       {children}
