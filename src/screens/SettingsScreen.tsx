@@ -1,92 +1,77 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { List, Switch, useTheme, Surface, Text } from 'react-native-paper';
-import { useTheme as useAppTheme } from '../contexts/ThemeContext';
+import { List, Switch, Text } from 'react-native-paper';
+import { useTheme } from '../contexts/ThemeContext';
 
 const SettingsScreen = () => {
-  const { themeType, setThemeType, isDarkMode } = useAppTheme();
-  const theme = useTheme();
+  const { isDarkMode, toggleTheme, theme } = useTheme();
 
   return (
-    <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <List.Section>
-        <List.Subheader style={{ color: theme.colors.onBackground }}>
+        <List.Subheader 
+          style={{ 
+            color: theme.colors.onSurfaceVariant,
+            fontFamily: 'Inter_600SemiBold'
+          }}
+        >
           Appearance
         </List.Subheader>
         
-        <Surface style={[styles.card, { backgroundColor: theme.colors.surfaceVariant }]}>
-          <List.Item
-            title="Dark Mode"
-            description="Use dark theme"
-            descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
-            titleStyle={{ color: theme.colors.onSurface }}
-            left={props => (
-              <List.Icon 
-                {...props} 
-                icon="theme-light-dark"
-                color={theme.colors.primary}
-              />
-            )}
-            right={() => (
-              <Switch
-                value={isDarkMode}
-                onValueChange={() => 
-                  setThemeType(isDarkMode ? 'light' : 'dark')
-                }
-                color={theme.colors.primary}
-              />
-            )}
-          />
-          
-          <View style={styles.divider} />
-          
-          <List.Item
-            title="Use System Theme"
-            description="Automatically switch theme based on system settings"
-            descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
-            titleStyle={{ color: theme.colors.onSurface }}
-            left={props => (
-              <List.Icon 
-                {...props} 
-                icon="cog" 
-                color={theme.colors.primary}
-              />
-            )}
-            right={() => (
-              <Switch
-                value={themeType === 'system'}
-                onValueChange={(value) => 
-                  setThemeType(value ? 'system' : isDarkMode ? 'dark' : 'light')
-                }
-                color={theme.colors.primary}
-              />
-            )}
-          />
-        </Surface>
+        <List.Item
+          title="Dark Mode"
+          description="Use dark theme"
+          left={props => <List.Icon {...props} icon="theme-light-dark" />}
+          right={() => (
+            <Switch
+              value={isDarkMode}
+              onValueChange={toggleTheme}
+              color={theme.colors.primary}
+            />
+          )}
+          titleStyle={{ 
+            color: theme.colors.onSurface,
+            fontFamily: 'Inter_500Medium'
+          }}
+          descriptionStyle={{ 
+            color: theme.colors.onSurfaceVariant,
+            fontFamily: 'Inter_400Regular'
+          }}
+        />
       </List.Section>
 
-      <List.Section>
-        <List.Subheader style={{ color: theme.colors.onBackground }}>
+      <View style={styles.aboutSection}>
+        <Text 
+          variant="titleMedium" 
+          style={{ 
+            color: theme.colors.onSurface,
+            fontFamily: 'Inter_600SemiBold',
+            marginBottom: 8
+          }}
+        >
           About
-        </List.Subheader>
-        
-        <Surface style={[styles.card, { backgroundColor: theme.colors.surfaceVariant }]}>
-          <List.Item
-            title="Version"
-            description="1.0.0"
-            descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
-            titleStyle={{ color: theme.colors.onSurface }}
-            left={props => (
-              <List.Icon 
-                {...props} 
-                icon="information" 
-                color={theme.colors.primary}
-              />
-            )}
-          />
-        </Surface>
-      </List.Section>
-    </Surface>
+        </Text>
+        <Text 
+          variant="bodyMedium" 
+          style={{ 
+            color: theme.colors.onSurfaceVariant,
+            fontFamily: 'Inter_400Regular'
+          }}
+        >
+          BookTracker v1.0.0
+        </Text>
+        <Text 
+          variant="bodySmall" 
+          style={{ 
+            color: theme.colors.onSurfaceVariant,
+            fontFamily: 'Inter_400Regular',
+            marginTop: 4
+          }}
+        >
+          A simple app to track your reading progress
+        </Text>
+      </View>
+    </View>
   );
 };
 
@@ -95,16 +80,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  card: {
-    borderRadius: 12,
-    elevation: 2,
-    marginHorizontal: 8,
-    overflow: 'hidden',
-  },
-  divider: {
-    height: 1,
-    opacity: 0.1,
-    backgroundColor: '#000',
+  aboutSection: {
+    marginTop: 32,
+    padding: 16,
   },
 });
 

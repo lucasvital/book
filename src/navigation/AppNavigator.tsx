@@ -2,21 +2,20 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useTheme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
 import HomeScreen from '../screens/HomeScreen';
-import FeedScreen from '../screens/FeedScreen';
-import SettingsScreen from '../screens/SettingsScreen';
 import BookDetailsScreen from '../screens/BookDetailsScreen';
 import AddBookScreen from '../screens/AddBookScreen';
+import FeedScreen from '../screens/FeedScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 const HomeStack = () => {
-  const theme = useTheme();
-  
+  const { theme } = useTheme();
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -25,7 +24,7 @@ const HomeStack = () => {
         },
         headerTintColor: theme.colors.onPrimary,
         headerTitleStyle: {
-          fontWeight: 'bold',
+          fontFamily: 'Inter_600SemiBold',
         },
       }}
     >
@@ -51,33 +50,32 @@ const HomeStack = () => {
 };
 
 const AppNavigator = () => {
-  const theme = useTheme();
+  const { theme, isDarkMode } = useTheme();
 
   return (
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={{
+          headerShown: false,
           tabBarStyle: {
-            backgroundColor: theme.colors.tabBarBackground,
-            borderTopColor: theme.colors.divider,
-            borderTopWidth: 1,
-            paddingBottom: 8,
-            paddingTop: 8,
-            height: 60,
+            backgroundColor: isDarkMode ? theme.colors.surface : theme.colors.background,
+            borderTopColor: 'transparent',
+            borderTopWidth: 0,
+            elevation: 0,
+            shadowOpacity: 0,
           },
           tabBarActiveTintColor: theme.colors.primary,
-          tabBarInactiveTintColor: theme.colors.outline,
-          headerStyle: {
-            backgroundColor: theme.colors.primary,
+          tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
+          tabBarLabelStyle: {
+            fontFamily: 'Inter_500Medium',
+            fontSize: 12,
           },
-          headerTintColor: theme.colors.onPrimary,
         }}
       >
         <Tab.Screen
           name="Home"
           component={HomeStack}
           options={{
-            headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <Icon name="book-open-variant" size={size} color={color} />
             ),
@@ -87,9 +85,8 @@ const AppNavigator = () => {
           name="Feed"
           component={FeedScreen}
           options={{
-            title: 'Activity Feed',
             tabBarIcon: ({ color, size }) => (
-              <Icon name="clock-time-four" size={size} color={color} />
+              <Icon name="note-text" size={size} color={color} />
             ),
           }}
         />

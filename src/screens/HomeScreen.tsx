@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
-import { Surface, Text, IconButton, FAB, Searchbar } from 'react-native-paper';
+import { Surface, Text, IconButton, Searchbar } from 'react-native-paper';
 import { useBooks } from '../contexts/BookContext';
 import { useNavigation } from '@react-navigation/native';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
@@ -185,11 +185,6 @@ const HomeScreen = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
         />
-        <FAB
-          icon="plus"
-          style={[styles.fab, { backgroundColor: theme.colors.primary, position: 'absolute', margin: 16, right: 0, bottom: 0 }]}
-          onPress={() => navigation.navigate('AddBook')}
-        />
       </View>
     </GestureHandlerRootView>
   );
@@ -230,8 +225,6 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     marginTop: 8,
-  },
-  fab: {
   },
   leftAction: {
     flex: 1,
